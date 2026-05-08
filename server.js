@@ -14,46 +14,96 @@ dotenv.config();
 
 const app = express();
 
-// ─── Middleware ───────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Allowed Frontend URLs
+// ─────────────────────────────────────────────────────────────
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://your-project.vercel.app",
+  "https://your-project.netlify.app",
+];
+
+// ─────────────────────────────────────────────────────────────
+// Middleware
+// ─────────────────────────────────────────────────────────────
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // allow requests with no origin
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS Not Allowed"));
+      }
+    },
     credentials: true,
-  })
+  }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Connect MongoDB ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Connect MongoDB
+// ─────────────────────────────────────────────────────────────
+
 connectDB();
 
-// ─── Routes ───────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// API Routes
+// ─────────────────────────────────────────────────────────────
+
 app.use("/api/auth", authRoutes);
 app.use("/api/designs", designRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 
-console.log("Cloudinary Key:", process.env.CLOUDINARY_API_KEY);
+// ─────────────────────────────────────────────────────────────
+// Health Check Route
+// ─────────────────────────────────────────────────────────────
 
-// ─── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => {
-  res.json({ message: "Om Sakthi Printers API is running 🖨️" });
+  res.status(200).json({
+    success: true,
+    message: "Om Sakthi Printers API is running 🖨️",
+  });
 });
 
-// ─── 404 handler ──────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// 404 Route
+// ─────────────────────────────────────────────────────────────
+
 app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
-// ─── Error handler ────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Global Error Handler
+// ─────────────────────────────────────────────────────────────
+
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Internal server error" });
+  console.error("ERROR:", err.message);
+
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+  });
 });
 
-// ─── Start server ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Start Server
+// ─────────────────────────────────────────────────────────────
+
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
