@@ -15,31 +15,13 @@ dotenv.config();
 const app = express();
 
 // ─────────────────────────────────────────────────────────────
-// Allowed Frontend URLs
-// ─────────────────────────────────────────────────────────────
-
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://om-sakthi-frontend-aavs.vercel.app/",
-  "https://merry-llama-505faa.netlify.app/",
-];
-
-// ─────────────────────────────────────────────────────────────
 // Middleware
 // ─────────────────────────────────────────────────────────────
 
+// Allow ALL frontend URLs
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS Not Allowed"));
-      }
-    },
+    origin: true,
     credentials: true,
   }),
 );
@@ -94,7 +76,7 @@ app.use((err, req, res, next) => {
 
   res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message: err.message || "Internal Server Error",
   });
 });
 
